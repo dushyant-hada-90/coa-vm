@@ -1,40 +1,52 @@
 import os
+import time
 import torch
+import torchaudio
+import numpy as np
 from omnivoice import OmniVoice
-import soundfile as sf
 
 def main():
     if not torch.cuda.is_available():
-        raise RuntimeError("NVIDIA GPU context not detected.")
+        raise RuntimeError("NVIDIA GPU context not detected. Make sure drivers are loaded.")
     
-    ref_audio_path = "modi.mp3"
-    if not os.path.exists(ref_audio_path):
-        raise FileNotFoundError(f"Missing reference file: '{ref_audio_path}'")
+    # Check for the asset file (Make sure modi.mp3 is uploaded to your VM folder!)
+    ref_file = "modi.mp3"
+    if not os.path.exists(ref_file):
+        raise FileNotFoundError(f"Please pull or upload '{ref_file}' into this directory.")
 
-    print("Loading OmniVoice model into V100...")
+    print("Loading OmniVoice framework onto V100 system layers...")
     model = OmniVoice.from_pretrained(
-        "k2-fsa/OmniVoice", 
-        device_map="cuda:0", 
+        "k2-fsa/OmniVoice",
+        device_map="cuda:0",
         dtype=torch.float16
     )
-    
-    # 1. WHAT THE REFERENCE AUDIO IS ACTUALLY SAYING (The Transcript)
-    # Provide the exact words spoken in modi.mp3 so the model aligns perfectly.
-    reference_transcript = "साथियो, कुछ लोग देश की महिलाओं के सपने टूटने को सरकार की नाकामी बता रहे हैं। लेकिन ये विषय कामयाबी" 
-    
-    # 2. THE NEW TEXT YOU WANT TO GENERATE
-    target_text = "भाइयों और बहनों, हमारे इस नए क्लाउड सर्वर पर ऑडियो क्लोनिंग पूरी तरह से काम कर रही है।"
-    
-    print("Running aligned cross-lingual voice synthesis...")
-    audio_tensors = model.generate(
-        text=target_text,
-        prompt_audio=ref_audio_path,
-        prompt_text=reference_transcript  # <--- This guides the phoneme alignment
+
+    print("Starting specialized cross-lingual inference...")
+    start_time = time.time()
+
+    # Using your exact parameters from the successful Colab run
+    audio = model.generate(
+        text="""
+        भाइयो और बहनों आज देश में एक नया प्रयोग हो रहा है, पाँच AI एजेंट्स और एक इंसान सब एक साथ voice room में बहस करेंगे बिना script के बिना किसी पूर्व निर्धारित क्रम के एक दूसरे को टोकेंगे असहमत होंगे और जिससे बात की जाए वही जवाब देगा ये है हमारा Council of Agents [pause] — जहाँ AI सिर्फ बोलता नहीं बल्कि बहस करता है और इस अनोखी पहल पर काम कर रहे हैं हमारे युवा प्रतिभाशाली उद्यमी — Dushyant और Vaibhav ये प्रोजेक्ट बहुत जल्द लॉन्च हो रहा है तो तैयार रहिए क्योंकि आवाज़ का भविष्य अब आ रहा है — और ये भविष्य है दमदार है भारतीय है अभूतपूर्व धन्यवाद
+        """,
+        ref_audio=ref_file,
+        ref_text="""
+        साथियो, कुछ लोग देश की महिलाओं के सपने टूटने को सरकार की नाकामी बता रहे हैं। लेकिन ये विषय कामयाबी
+        """
     )
-    
-    output_path = "cloned_output.mp3"
-    sf.write(output_path, audio_tensors[0], 24000)
-    print(f"\nSuccess! Aligned audio saved to: {output_path}")
+
+    print(f"Inference complete in: {time.time() - start_time:.2f}s")
+
+    # Post-processing array formatting safely
+    wav = audio[0]
+    if isinstance(wav, np.ndarray):
+        wav = torch.from_numpy(wav)
+    if wav.dim() == 1:
+        wav = wav.unsqueeze(0)
+
+    output_filename = "output.wav"
+    torchaudio.save(output_filename, wav, 24000)
+    print(f"Success! Perfect audio asset saved to disk: {output_filename}")
 
 if __name__ == "__main__":
     main()
