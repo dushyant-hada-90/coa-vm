@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "chats": {
+    "09b75996-8bae-4edb-b088-cefc032a32fb": {
+      "path": "2026-06-18_modify-create_instance.sh-for-memory-and-env-secrets_09b75996-8bae-4edb-b088-cefc032a32fb.md",
+      "title": "Modify create_instance.sh for memory and env secrets",
+      "updated": "2026-06-18T13:05:50.108Z"
+    },
+    "53d5603c-ff6b-44c5-ac0e-05c6cc361b8a": {
+      "path": "2026-06-18_environment-variable-management-in-create_instance.sh_53d5603c-ff6b-44c5-ac0e-05c6cc361b8a.md",
+      "title": "Environment variable management in create_instance.sh",
+      "updated": "2026-06-18T16:15:17.023Z"
+    },
+    "61565ceb-d3df-474b-9c55-ed759477eb2c": {
+      "path": "2026-06-18_environment-variable-import-in-create_instance.sh_61565ceb-d3df-474b-9c55-ed759477eb2c.md",
+      "title": "Environment variable import in create_instance.sh",
+      "updated": "2026-06-18T16:02:34.198Z"
+    }
+  }
+}
