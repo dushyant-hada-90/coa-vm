@@ -24,7 +24,7 @@ def main():
     )
     
     # 3. Define target script text
-    prompt_text = "My fellow citizens, the audio cloning pipeline execution on this European cloud node is operational."
+    prompt_text = "भाइयों और बहनों, हमारे इस नए क्लाउड सर्वर पर ऑडियो क्लोनिंग पूरी तरह से काम कर रही है।"
     print(f"Cloning voice profile from '{ref_audio_path}' using text: '{prompt_text}'")
     
     # 4. Generate the voice clone arrays
