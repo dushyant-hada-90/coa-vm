@@ -4,39 +4,37 @@ from omnivoice import OmniVoice
 import soundfile as sf
 
 def main():
-    # 1. Verify CUDA/GPU context is active
     if not torch.cuda.is_available():
-        raise RuntimeError("NVIDIA GPU context not detected. Run 'nvidia-smi' to verify drivers.")
+        raise RuntimeError("NVIDIA GPU context not detected.")
     
-    print(f"Using GPU acceleration on: {torch.cuda.get_device_name(0)}")
-    
-    # 2. Check for reference voice file
-    ref_audio_path = "modi.wav"
+    ref_audio_path = "modi.mp3"
     if not os.path.exists(ref_audio_path):
-        raise FileNotFoundError(f"Missing reference file: '{ref_audio_path}'. Please place it in this directory.")
+        raise FileNotFoundError(f"Missing reference file: '{ref_audio_path}'")
 
-    print("Loading OmniVoice framework into V100 VRAM...")
-    # FP16 precision keeps memory foot-print optimized for fast cross-handshakes
+    print("Loading OmniVoice model into V100...")
     model = OmniVoice.from_pretrained(
         "k2-fsa/OmniVoice", 
         device_map="cuda:0", 
         dtype=torch.float16
     )
     
-    # 3. Define target script text
-    prompt_text = "भाइयों और बहनों, हमारे इस नए क्लाउड सर्वर पर ऑडियो क्लोनिंग पूरी तरह से काम कर रही है।"
-    print(f"Cloning voice profile from '{ref_audio_path}' using text: '{prompt_text}'")
+    # 1. WHAT THE REFERENCE AUDIO IS ACTUALLY SAYING (The Transcript)
+    # Provide the exact words spoken in modi.mp3 so the model aligns perfectly.
+    reference_transcript = "साथियो, कुछ लोग देश की महिलाओं के सपने टूटने को सरकार की नाकामी बता रहे हैं। लेकिन ये विषय कामयाबी" 
     
-    # 4. Generate the voice clone arrays
+    # 2. THE NEW TEXT YOU WANT TO GENERATE
+    target_text = "भाइयों और बहनों, हमारे इस नए क्लाउड सर्वर पर ऑडियो क्लोनिंग पूरी तरह से काम कर रही है।"
+    
+    print("Running aligned cross-lingual voice synthesis...")
     audio_tensors = model.generate(
-        text=prompt_text,
-        prompt_audio=ref_audio_path  # Feeds the reference audio properties to the generation pipeline
+        text=target_text,
+        prompt_audio=ref_audio_path,
+        prompt_text=reference_transcript  # <--- This guides the phoneme alignment
     )
     
-    # 5. Write the resulting cloned output to disk
-    output_path = "cloned_output.wav"
+    output_path = "cloned_output.mp3"
     sf.write(output_path, audio_tensors[0], 24000)
-    print(f"\nSuccess! Cloned voice output saved cleanly to: {output_path}")
+    print(f"\nSuccess! Aligned audio saved to: {output_path}")
 
 if __name__ == "__main__":
     main()
