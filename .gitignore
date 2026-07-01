@@ -1,1 +1,10 @@
 .env
+.venv/
+__pycache__/
+*.pyc
+*.log
+outputs/
+output.wav
+reference_test.wav
+*.mp3
+*.wav

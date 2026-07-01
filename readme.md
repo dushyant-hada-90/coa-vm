@@ -1,35 +1,58 @@
-# Council of Agents (CoA) — Inference Node Runbook
+# CoA EmoKnob Inference Node
 
-Manage the `coa-inference-node` GCP VM from your **local terminal** using `vm.sh`. Lifecycle commands cannot be run from inside an SSH session.
+GCP VM runbook for [EmoKnob](https://github.com/tonychenxyz/emoknob) / MetaVoice-1B. **English only.**
 
-```bash
-chmod +x vm.sh   # first time only
-```
-
-## VM Commands
-
-| Command | Description |
-|---------|-------------|
-| `./vm.sh start` | Start the VM (allocates CPU + V100 GPU) |
-| `./vm.sh stop` | Stop the VM (halts billing, keeps disk data) |
-| `./vm.sh status` | Check if VM is `on` or `off` |
-| `./vm.sh ssh` | SSH into the VM |
-
-Typical workflow:
+## Local: VM lifecycle
 
 ```bash
-./vm.sh start
-./vm.sh status    # wait until it prints "on"
+chmod +x vm.sh
+./vm.sh start    # wait for ./vm.sh status -> "on"
 ./vm.sh ssh
+./vm.sh stop     # halt billing
 ```
 
-## Voice Cloning
+Optional: `cp .env.example .env` to override project/zone (defaults in `load_env.sh`).
 
-Once connected via SSH:
+## VM: one-time setup
 
 ```bash
-cd ~/coa-vm
-python3 clone_voice.py
+git clone https://github.com/dushyant-hada-90/coa-vm.git ~/coa-vm
+cd ~/coa-vm && bash bootstrap_emoknob.sh
 ```
 
-Place the reference audio (e.g. `modi.mp3`) in the folder before running. Output is saved as `output.wav`.
+Takes ~15–30 min first time (PyTorch + model cache on first inference).
+
+## VM: run inference
+
+```bash
+source ~/coa-vm/.venv/bin/activate
+cd ~/coa-vm
+
+python run_emoknob.py --list-emotions
+
+python run_emoknob.py \
+  --text "This is a great project with expressive speech." \
+  --ref-audio palki.mp3 \
+  --emotion happy \
+  --strength 0.3 \
+  --output output.wav
+```
+
+Reference audio is auto-resampled to 24 kHz mono (avoids DeepFilterNet warnings).
+
+`outputs/` holds MetaVoice intermediates; final file is `--output` (default `output.wav`).
+
+## If CUDA OOM on V100
+
+1. Keep `--compile` off (default)
+2. Recreate VM with L4: set `MACHINE_TYPE=g2-standard-8` in `.env`, delete instance, run `create_instance.sh`, re-bootstrap
+
+## Files
+
+| File | Role |
+|------|------|
+| `vm.sh` | start / stop / status / ssh |
+| `create_instance.sh` | provision GPU VM |
+| `bootstrap_emoknob.sh` | install deps + EmoKnob |
+| `run_emoknob.py` | inference CLI |
+| `load_env.sh` | shared config defaults |

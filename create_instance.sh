@@ -1,33 +1,37 @@
-#!/bash/bin
+#!/bin/bash
 
-INSTANCE_NAME="coa-inference-node"
-PROJECT_ID="sharp-leaf-451416-r4"
-ZONE="europe-west4-a"
-MACHINE_TYPE="n1-standard-8"
-GPU_TYPE="nvidia-tesla-v100"
-GPU_COUNT=1
-
-# Using Google's universal standard Ubuntu image (Always available)
-IMAGE_PROJECT="ubuntu-os-cloud"
-IMAGE_FAMILY="ubuntu-2204-lts"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/load_env.sh"
 
 echo "========================================================"
 echo "Creating GPU Instance: $INSTANCE_NAME"
 echo "Project:               $PROJECT_ID"
 echo "Zone:                  $ZONE"
+echo "Machine type:          $MACHINE_TYPE"
+echo "GPU:                   ${GPU_TYPE} x${GPU_COUNT}"
 echo "Using Base Image:      $IMAGE_PROJECT/$IMAGE_FAMILY"
 echo "========================================================"
 
-gcloud compute instances create "$INSTANCE_NAME" \
-    --project="$PROJECT_ID" \
-    --zone="$ZONE" \
-    --machine-type="$MACHINE_TYPE" \
-    --accelerator=type="$GPU_TYPE",count=$GPU_COUNT \
-    --image-family="$IMAGE_FAMILY" \
-    --image-project="$IMAGE_PROJECT" \
-    --boot-disk-size=150GB \
-    --boot-disk-type=pd-ssd \
-    --metadata=install-nvidia-driver=true \
+CREATE_ARGS=(
+    --project="$PROJECT_ID"
+    --zone="$ZONE"
+    --machine-type="$MACHINE_TYPE"
+    --image-family="$IMAGE_FAMILY"
+    --image-project="$IMAGE_PROJECT"
+    --boot-disk-size="$BOOT_DISK_SIZE"
+    --boot-disk-type="$BOOT_DISK_TYPE"
+    --metadata=install-nvidia-driver=true
     --maintenance-policy=TERMINATE
+)
+
+# G2 machine types include L4 GPUs; N1 types need --accelerator.
+if [[ "$MACHINE_TYPE" == g2-* ]]; then
+    echo "G2 machine type detected — using embedded GPU (no --accelerator flag)."
+else
+    CREATE_ARGS+=(--accelerator=type="$GPU_TYPE",count="$GPU_COUNT")
+fi
+
+gcloud compute instances create "$INSTANCE_NAME" "${CREATE_ARGS[@]}"
 
 echo "Deployment command completed."

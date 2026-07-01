@@ -1,8 +1,8 @@
 #!/bin/bash
 
-INSTANCE_NAME="coa-inference-node"
-PROJECT_ID="sharp-leaf-451416-r4"
-ZONE="europe-west4-a"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/load_env.sh"
 
 usage() {
     echo "Usage: $0 {start|stop|status|ssh}"
